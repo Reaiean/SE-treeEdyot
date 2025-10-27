@@ -2,6 +2,6 @@
 
 Kier Borne: Backend Development, Database Design
 
-Neokent Durano: Frontend Development, Map & Alert Integration
+Neokent Durano: Backend Development, Map & Alert Integration
 
-Richie Ronde: Backend Development, UI/UX Wireframing
+Richie Ronde: Frontend Development, UI/UX Wireframing

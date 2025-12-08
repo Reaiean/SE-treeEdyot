@@ -23,35 +23,55 @@ function createReportCard(report) {
     div.className = "reportItem";
 
     const idFormat = report.id ? `RPT${String(report.id).padStart(3, '0')}` : "Report";
-
-    const statusClass = report.status ? `status-${report.status.toLowerCase()}` : "";
-    const severity = escapeHtml(report.severity || "");
-    const type = escapeHtml(report.reportType || "");
+    const type = escapeHtml(report.reportType || "Drainage Issue");
+    const status = escapeHtml(report.status || "Pending");
+    const statusClass = `status-${status.toLowerCase()}`;
+    const severity = escapeHtml(report.severity || "Minor");
     const desc = escapeHtml(report.description || "");
     const loc = escapeHtml(report.location || "");
     const filed = escapeHtml(report.dateFiled || "");
 
+// Use server-root relative path
+const imgURL = report.image ? `/eco-drainage_app/${report.image}` : "/eco-drainage_app/uploads/defaultImage.jpg";
+
+
+    
+
+
     div.innerHTML = `
-        <div class="reportTop">
-            <span class="reportID">${idFormat}</span>
-            <span class="statusBadge ${statusClass}">${escapeHtml(report.status || "")}</span>
+        <div class="reportImage">
+            <img src="${imgURL}" alt="Report Photo">
         </div>
 
-        <div class="severity">${severity}</div>
+        <div class="reportContent">
+            <div class="reportTopRow">
+                <span class="reportID">${idFormat}</span>
+                <span class="statusBadge ${statusClass}">${status}</span>
+                <span class="severityBadge">${severity}</span>
+            </div>
 
-        <div class="reportDesc">${desc}</div>
+            <div class="reportType">${type}</div>
 
-        <div class="location">${loc}</div>
+            <p class="reportDesc">${desc}</p>
 
-        <div class="filedDate">Filed: ${filed}</div>
+            <div class="reportMeta">
+                <span class="metaItem">
+                    📍 ${loc}
+                </span>
+                <span class="metaItem">
+                    📅 Filed: ${filed}
+                </span>
+            </div>
+        </div>
 
         <button class="viewBtn" onclick="viewReport(${report.id})">
-            View Details
+            👁 View Details
         </button>
     `;
 
     return div;
 }
+
 
 
 // Button action placeholder

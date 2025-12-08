@@ -1,17 +1,17 @@
 <?php
 session_start();
 
-// Ensure only logged-in users can access this page
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.html");
     exit();
 }
 
-// Updated session retrieval (based on new login.php)
 $userName = $_SESSION['user_name'] ?? 'Resident';
-$userRole = $_SESSION['user_role_id'] ?? 1;
+$userRole = $_SESSION['role_id'] ?? 2;       // 2 = Resident
 $userEmail = $_SESSION['user_email'] ?? '';
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -10,6 +10,7 @@ body {
     color: #222;
 }
 
+/* TOP BAR */
 .top-bar {
     position: fixed;
     top: 0;
@@ -54,12 +55,14 @@ body {
     opacity: 0.9;
 }
 
+/* WRAPPER */
 .dashboard-wrapper {
     max-width: 1200px;
-    margin: 80px auto 40px;      
+    margin: 80px auto 40px;
     padding: 0 16px 40px;
 }
 
+/* HEADER */
 .admin-header h1 {
     font-size: 40px;
     font-weight: 800;
@@ -74,6 +77,7 @@ body {
     margin-bottom: 20px;
 }
 
+/* STATS */
 .stats-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -99,6 +103,7 @@ body {
     font-weight: 700;
 }
 
+/* MAP ROW */
 .content-row {
     display: grid;
     grid-template-columns: 2.4fr 1fr;
@@ -106,32 +111,17 @@ body {
     align-items: stretch;
 }
 
+/* MAP PANEL */
 .map-panel {
     background-color: #ffffff;
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     padding: 12px;
     display: flex;
-    flex-direction: column; /* stacked: map on top, street view below */
+    flex-direction: column;
 }
 
-/* old placeholder (not used now, but kept if you need it)
-.map-placeholder {
-    width: 100%;
-    min-height: 380px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    background-color: #f3f3f3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #555;
-    font-size: 18px;
-    text-align: center;
-}
-*/
-
-/* NEW: map + street view containers */
+/* OpenStreetMap container */
 #map {
     width: 100%;
     height: 380px;
@@ -143,12 +133,19 @@ body {
 
 #street-view {
     width: 100%;
-    height: 280px;
+    height: 120px;
     border-radius: 10px;
     border: 1px solid #ddd;
-    background-color: #f3f3f3;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: 14px;
+    text-align: center;
 }
 
+/* REPORT BUTTON */
 .side-panel {
     background-color: #ffffff;
     border-radius: 10px;
@@ -178,6 +175,7 @@ body {
     opacity: 0.93;
 }
 
+/* LOGS SECTION */
 .logs-section {
     margin-top: 26px;
 }
@@ -189,6 +187,7 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
+/* TABS */
 .logs-tabs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -208,6 +207,7 @@ body {
     color: #555;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
+    text-align: center;
 }
 
 .logs-tab.active-tab {
@@ -220,6 +220,7 @@ body {
     margin-top: 6px;
 }
 
+/* TABLES */
 .logs-table {
     display: none;
 }
@@ -249,6 +250,7 @@ body {
     border-bottom: none;
 }
 
+/* BADGES */
 .badge {
     display: inline-block;
     padding: 3px 10px;
@@ -258,14 +260,15 @@ body {
     color: #222;
 }
 
+/* USER ROLE BADGES */
+.badge-admin {
+    background-color: #ffd9d9;
+    color: #a73a3a;
+}
+
 .badge-resident {
     background-color: #d4f7df;
     color: #1f7a3b;
-}
-
-.badge-barangay {
-    background-color: #e4d9ff;
-    color: #5b3ca5;
 }
 
 .badge-engineer {
@@ -273,11 +276,7 @@ body {
     color: #285f9b;
 }
 
-.badge-admin {
-    background-color: #ffd9d9;
-    color: #a73a3a;
-}
-
+/* REPORT BADGES */
 .badge-high {
     background-color: #ffd8d8;
     color: #a30000;
@@ -293,14 +292,14 @@ body {
     color: #005789;
 }
 
-.badge-ongoing {
-    background-color: #fff1c2;
-    color: #805d00;
-}
-
 .badge-completed {
     background-color: #d3f9d8;
     color: #1f7a3b;
+}
+
+.badge-ongoing {
+    background-color: #fff1c2;
+    color: #805d00;
 }
 
 .badge-pending {
@@ -308,6 +307,7 @@ body {
     color: #5b3ca5;
 }
 
+/* RESPONSIVE */
 @media (max-width: 900px) {
     .stats-row {
         grid-template-columns: repeat(2, 1fr);

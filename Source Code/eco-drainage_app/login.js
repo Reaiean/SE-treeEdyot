@@ -1,50 +1,45 @@
-const loginForm = document.getElementById("loginForm");
-const message = document.getElementById("message");
+document.getElementById("loginForm").addEventListener("submit", function (e) {
+  e.preventDefault();
 
-loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const message = document.getElementById("message");
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+fetch("login.php", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email, password })
+})
 
-    message.textContent = "";
-    message.style.color = "red";
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      message.style.color = "green";
+      message.textContent = "Login successful! Redirecting...";
 
-    if (!email || !password) {
-        message.textContent = "Please enter email and password.";
-        return;
-    }
-
-    try {
-        const response = await fetch("login.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-        });
-
-        const result = await response.json();
-        console.log(result);
-
-        if (!result.success) {
-            message.textContent = result.message;
-            return;
+      setTimeout(() => {
+        // Redirect based on role_id
+        switch (data.role_id) {
+          case 1: // Admin
+            window.location.href = "adminDashboard.php";
+            break;
+          case 2: // Resident
+            window.location.href = "residentDashboard.php";
+            break;
+          case 3: // Maintenance Staff
+            window.location.href = "maintenanceDashboard.php"; // if exists
+            break;
+          default:
+            window.location.href = "login.html";
         }
-
-        // Redirect BASED ON ROLE
-        const roleID = parseInt(result.roleID);
-
-        if (roleID === 1) {
-            window.location.href = "admindashboard.php"; // ADMIN
-        } else if (roleID === 2) {
-            window.location.href = "residentDashboard.php"; // RESIDENT
-        } else if (roleID === 3) {
-            window.location.href = "maintenanceDashboard.php"; // OPTIONAL
-        } else {
-            message.textContent = "Unknown role.";
-        }
-
-    } catch (err) {
-        console.error(err);
-        message.textContent = "Server error. Please try again.";
+      }, 1000);
+    } else {
+      message.style.color = "red";
+      message.textContent = data.message;
     }
+  })
+  .catch(error => {
+    message.textContent = "Error connecting to server.";
+    console.error(error);
+  });
 });

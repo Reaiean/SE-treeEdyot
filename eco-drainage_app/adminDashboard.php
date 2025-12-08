@@ -73,6 +73,15 @@ if ($result = $conn->query($reportQuery)) {
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard - Eco Drainage</title>
+
+    <!-- Leaflet OpenStreetMap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
     <link rel="stylesheet" href="adminDashboard.css">
 </head>
 <body>
@@ -82,7 +91,9 @@ if ($result = $conn->query($reportQuery)) {
         <span class="system-title">Eco-Drainage Monitoring System</span>
     </div>
     <div class="top-bar-right">
-        <span class="welcome-text">Welcome, Administrator!</span>
+        <span class="welcome-text">
+          Welcome, <?= htmlspecialchars($_SESSION['user_name'] ?? 'Administrator') ?>!
+        </span>
         <button class="logout-btn" onclick="window.location.href='logout.php'">Logout</button>
     </div>
 </header>
@@ -212,10 +223,14 @@ if ($result = $conn->query($reportQuery)) {
 
 </main>
 
-<script src="adminDashboard.js"></script>
+<!-- Leaflet JS (OpenStreetMap) -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="">
+</script>
 
-<!-- Google Maps API -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+<!-- Your Dashboard JS (tabs + OpenStreetMap logic) -->
+<script src="adminDashboard.js"></script>
 
 </body>
 </html>

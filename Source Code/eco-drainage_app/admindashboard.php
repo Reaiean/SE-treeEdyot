@@ -4,10 +4,11 @@ session_start();
 require_once "db_config.php"; // uses your existing DB connector
 
 // ----------- ADMIN ACCESS CHECK -----------
-if (!isset($_SESSION['roleID']) || $_SESSION['roleID'] != 1) {
+if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != 1) {
     header("Location: login.html");
     exit();
 }
+
 
 // ----------- DASHBOARD STATS -----------
 $totalUsers = 0;

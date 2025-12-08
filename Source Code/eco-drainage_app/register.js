@@ -35,7 +35,7 @@ registerForm.addEventListener('submit', async (e) => {
   const userData = { roleID, firstName, lastName, email, password, contactNumber, address };
 
   try {
-    const response = await fetch('http://localhost:8000/eco-drainage_app/register.php', {
+    const response = await fetch('register.php', {          
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)

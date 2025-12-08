@@ -1,0 +1,109 @@
+/* Since we linked residentDashboard.css in the PHP file, 
+   we only need to add styles specific to the Staff Workflow.
+*/
+
+/* Adjust grid to fit the input fields and update button */
+.staffCardHeight {
+    /* Different grid columns: Image | Content | Buttons */
+    grid-template-columns: 120px 1fr 150px !important; 
+    align-items: start; 
+}
+
+/* Container for the Diagram's Inputs (Dropdown & Remarks) */
+.staffActionArea {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px dashed #d8e6ff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    background-color: #f8faff;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #eef3ff;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1; /* Allow them to grow equally */
+    min-width: 140px;
+}
+
+.inputGroup label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+    text-transform: uppercase;
+}
+
+/* Styling the inputs to match the 'Resident' clean aesthetic */
+.staffSelect, .staffInput {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    width: 100%; 
+    box-sizing: border-box;
+    background-color: white;
+}
+
+.staffInput:focus, .staffSelect:focus {
+    border-color: #0078d7;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,120,215,0.1);
+}
+
+/* Button Group on the right side */
+.staffBtnGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    height: 100%;
+    border-left: 1px solid #eee;
+    padding-left: 15px;
+}
+
+/* Specific style for the Update Button */
+.updateBtn {
+    background-color: #28a745; /* Green to signify 'Action' */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: background 0.2s;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.updateBtn:hover {
+    background-color: #218838;
+}
+
+/* Mobile Responsiveness for Staff Card */
+@media(max-width: 760px) {
+    .staffCardHeight {
+        grid-template-columns: 1fr !important; /* Stack vertically */
+    }
+    
+    .staffBtnGroup {
+        flex-direction: row; /* Buttons side-by-side on mobile */
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 15px;
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+    }
+
+    .viewBtn, .updateBtn {
+        flex: 1;
+        text-align: center;
+    }
+}

@@ -3,37 +3,28 @@ session_start();
 
 require_once "db_config.php"; // uses your existing DB connector
 
-// ----------- ADMIN ACCESS CHECK -----------
 if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != 1) {
     header("Location: login.html");
     exit();
 }
 
-
-// ----------- DASHBOARD STATS -----------
 $totalUsers = 0;
 $totalReports = 0;
 $activeReports = 0;
 $completedReports = 0;
 
-// Total users
 $res = $conn->query("SELECT COUNT(*) AS c FROM users");
 $totalUsers = ($res) ? (int)$res->fetch_assoc()['c'] : 0;
 
-// Total reports
 $res = $conn->query("SELECT COUNT(*) AS c FROM REPORTS");
 $totalReports = ($res) ? (int)$res->fetch_assoc()['c'] : 0;
 
-// Active reports (Ongoing)
 $res = $conn->query("SELECT COUNT(*) AS c FROM REPORTS WHERE status='Ongoing'");
 $activeReports = ($res) ? (int)$res->fetch_assoc()['c'] : 0;
 
-// Completed reports
 $res = $conn->query("SELECT COUNT(*) AS c FROM REPORTS WHERE status='Completed'");
 $completedReports = ($res) ? (int)$res->fetch_assoc()['c'] : 0;
 
-
-// ----------- USER MANAGEMENT DATA -----------
 $userRows = [];
 $userQuery = "
     SELECT 
@@ -54,8 +45,6 @@ if ($result = $conn->query($userQuery)) {
     }
 }
 
-
-// ----------- REPORT LOGS DATA -----------
 $reportRows = [];
 $reportQuery = "
     SELECT id, reportType, location, severity, status, dateFiled, description, latitude, longitude
@@ -74,7 +63,6 @@ if ($result = $conn->query($reportQuery)) {
     <meta charset="UTF-8">
     <title>Admin Dashboard - Eco Drainage</title>
 
-    <!-- Leaflet OpenStreetMap CSS -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -105,7 +93,6 @@ if ($result = $conn->query($reportQuery)) {
         <p>System Overview and Management</p>
     </section>
 
-    <!-- ----------- STATS CARDS ----------- -->
     <section class="stats-row">
         <div class="stat-card">
             <p class="stat-label">Total Users</p>
@@ -125,7 +112,6 @@ if ($result = $conn->query($reportQuery)) {
         </div>
     </section>
 
-    <!-- ----------- MAP PANEL ----------- -->
     <section class="content-row">
         <div class="map-panel">
             <div id="map"></div>
@@ -137,7 +123,6 @@ if ($result = $conn->query($reportQuery)) {
         </aside>
     </section>
 
-    <!-- ----------- LOGS SECTION ----------- -->
     <section class="logs-section">
         <div class="logs-card">
 
@@ -149,7 +134,6 @@ if ($result = $conn->query($reportQuery)) {
 
             <div class="logs-content">
 
-                <!-- USER MANAGEMENT TABLE -->
                 <div id="user-management" class="logs-table active-table">
                     <table>
                         <thead>
@@ -184,7 +168,6 @@ if ($result = $conn->query($reportQuery)) {
                     </table>
                 </div>
 
-                <!-- REPORT LOGS TABLE -->
                 <div id="report-logs" class="logs-table">
                     <table>
                         <thead>
@@ -214,7 +197,6 @@ if ($result = $conn->query($reportQuery)) {
                     </table>
                 </div>
 
-                <!-- EMPTY ACTIVITY LOG -->
                 <div id="activity-logs" class="logs-table"></div>
 
             </div>
@@ -223,13 +205,11 @@ if ($result = $conn->query($reportQuery)) {
 
 </main>
 
-<!-- Leaflet JS (OpenStreetMap) -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="">
 </script>
 
-<!-- Your Dashboard JS (tabs + OpenStreetMap logic) -->
 <script src="adminDashboard.js"></script>
 
 </body>

@@ -118,9 +118,6 @@ if ($result = $conn->query($reportQuery)) {
             <div id="street-view"></div>
         </div>
 
-        <aside class="side-panel">
-            <button class="file-report-btn">VIEW REPORT</button>
-        </aside>
     </section>
 
     <section class="logs-section">
@@ -178,7 +175,7 @@ if ($result = $conn->query($reportQuery)) {
                                 <th>Severity</th>
                                 <th>Status</th>
                                 <th>Date Filed</th>
-                                <th>Description</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -187,10 +184,27 @@ if ($result = $conn->query($reportQuery)) {
                                     <td><?= $r['id'] ?></td>
                                     <td><?= htmlspecialchars($r['reportType']) ?></td>
                                     <td><?= htmlspecialchars($r['location']) ?></td>
-                                    <td><span class="badge badge-<?= strtolower($r['severity']) ?>"><?= $r['severity'] ?></span></td>
+                                    <td>
+                                        <span class="badge 
+                                          <?php
+                                         $sev = strtolower($r['severity']);
+                                            if ($sev === 'severe') echo 'badge-severe';
+                                         elseif ($sev === 'moderate') echo 'badge-moderate';
+                                         elseif ($sev === 'minor') echo 'badge-minor';
+                                         else echo 'badge-minor'; // default
+                                            ?>">
+                                        <?= htmlspecialchars($r['severity']) ?>
+                                        </span>
+                                    </td>
+
                                     <td><span class="badge badge-<?= strtolower($r['status']) ?>"><?= $r['status'] ?></span></td>
                                     <td><?= htmlspecialchars($r['dateFiled']) ?></td>
-                                    <td><?= htmlspecialchars($r['description']) ?></td>
+                                    <td>
+                                    <button class="action-view-btn" onclick="window.location.href='viewReport.php?id=<?= $r['id'] ?>'">
+                                    👁
+                                    </button>
+                                    </td>
+
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

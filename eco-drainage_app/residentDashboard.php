@@ -6,12 +6,10 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$userName = $_SESSION['user_name'] ?? 'Resident';
-$userRole = $_SESSION['role_id'] ?? 2;       // 2 = Resident
+$userName  = $_SESSION['user_name']  ?? 'Resident';
+$userRole  = $_SESSION['role_id']    ?? 2;       // 2 = Resident
 $userEmail = $_SESSION['user_email'] ?? '';
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,8 +26,10 @@ $userEmail = $_SESSION['user_email'] ?? '';
     <h1 class="appTitle">Eco-Drainage Monitoring System</h1>
 
     <div class="userMenu">
-        <!-- Left side -->
-        <button class="newReportBtn" onclick="window.location.href='createReport.php'">File New Report</button>
+        <!-- File report -->
+        <button class="newReportBtn" onclick="window.location.href='createReport.php'">
+            File New Report
+        </button>
 
         <!-- Notification Icon -->
         <button class="notifBtn" title="Notifications" onclick="window.location.href='checkNotification.php'">
@@ -47,20 +47,22 @@ $userEmail = $_SESSION['user_email'] ?? '';
     </div>
 </header>
 
-
 <main class="dashboard">
 
-<div class="reportsHeader">
-  <div class="reportsHeader-left">
-    <h2>My Reports</h2>
-    <p class="subtitle">Track and manage your drainage reports</p>
-  </div>
+    <div class="reportsHeader">
+        <div class="reportsHeader-left">
+            <h2>My Reports</h2>
+            <p class="subtitle">Track and manage your drainage reports</p>
+        </div>
 
-  <div class="reportsHeader-right">
-    <button class="dbNewReportBtn" onclick="window.location.href='createReport.php'">+ File New Report</button>
-  </div>
-</div>
+        <div class="reportsHeader-right">
+            <button class="dbNewReportBtn" onclick="window.location.href='createReport.php'">
+                + File New Report
+            </button>
+        </div>
+    </div>
 
+    <!-- Stats row -->
     <section class="stats">
         <div class="card">
             <h3>Total Reports</h3>
@@ -80,26 +82,32 @@ $userEmail = $_SESSION['user_email'] ?? '';
         </div>
     </section>
 
-    <h2>Reports Map - Cebu City</h2>
+    <!-- MAIN TWO-COLUMN LAYOUT -->
+    <section class="mainLayout">
 
-    <section class="map card">
-        <div id="map" style="height: 400px; width: 100%; border-radius: 12px;"></div>
-    </section>
-
-    <section class="reports">
-        <h2>Recent Reports</h2>
-        <div id="reportsList" class="reportsList">
-            <p>Loading your reports...</p>
+        <!-- LEFT: MAP -->
+        <div class="mapColumn card">
+            <h2 class="sectionTitle">Reports Map - Cebu City</h2>
+            <div id="map"></div>
         </div>
+
+        <!-- RIGHT: RECENT REPORTS -->
+        <aside class="reportsColumn card">
+            <div class="reportsColumnHeader">
+                <h2>Recent Reports</h2>
+            </div>
+            <div id="reportsList" class="reportsList">
+                <p>Loading your reports...</p>
+            </div>
+        </aside>
     </section>
+
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
     const USER_EMAIL = <?php echo json_encode($userEmail); ?>;
 </script>
-
 <script src="residentDashboard.js"></script>
 </body>
 </html>

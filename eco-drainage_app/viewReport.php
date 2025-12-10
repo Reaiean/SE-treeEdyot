@@ -2,20 +2,17 @@
 session_start();
 require_once "db_config.php";
 
-// Redirect if not logged in
 if (!isset($_SESSION['user_email'])) {
     header("Location: login.html");
     exit;
 }
 
-// Validate ID input
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("Invalid report ID");
 }
 
 $reportID = intval($_GET['id']);
 
-// Query to get report + user details
 $sql = "
 SELECT r.*, 
        u.firstName, u.lastName
@@ -37,21 +34,23 @@ if ($result->num_rows === 0) {
 $report = $result->fetch_assoc();
 $reporterName = $report['firstName'] . " " . $report['lastName'];
 
-// Image handling
-$imagePath = $report['image'] ? "/eco-drainage_app/" . $report['image'] : "/eco-drainage_app/uploads/defaultImage.jpg";
+$imageRel = !empty($report['photoPath']) 
+    ? $report['photoPath'] 
+    : "uploads/defaultImage.jpg";
 
-// Coordinates fallback
+$imagePath = "/eco-drainage_app/" . $imageRel;
+
 $lat = $report['latitude'] ?? $report['lat'] ?? null;
 $lng = $report['longitude'] ?? $report['lng'] ?? null;
-?>
 
+$severity = !empty($report['severity']) ? $report['severity'] : "N/A";
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Report Details</title>
 
-    <!-- Leaflet CSS (OpenStreetMap) -->
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
@@ -83,6 +82,20 @@ $lng = $report['longitude'] ?? $report['lng'] ?? null;
         .report-header {
             font-size: 22px;
             font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .report-header-top {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .report-sub {
+            margin-top: 4px;
+            font-size: 14px;
+            color: #555;
         }
 
         .statusBadge {
@@ -95,6 +108,15 @@ $lng = $report['longitude'] ?? $report['lng'] ?? null;
         .status-pending { background: #f39c12; }
         .status-ongoing { background: #007bff; }
         .status-completed { background: #2ecc71; }
+
+        .severityBadge {
+            background: #ffb8b8;
+            color: #a10000;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
         .report-image img {
             width: 100%;
@@ -131,13 +153,21 @@ $lng = $report['longitude'] ?? $report['lng'] ?? null;
     </button>
 
     <div class="report-header">
-        RPT<?= str_pad($report['id'], 3, '0', STR_PAD_LEFT); ?>
-        <span class="statusBadge status-<?= strtolower($report['status']); ?>">
-            <?= htmlspecialchars($report['status']); ?>
-        </span>
-        <span style="margin-left:10px; font-size:15px;">
+        <div class="report-header-top">
+            RPT<?= str_pad($report['id'], 3, '0', STR_PAD_LEFT); ?>
+
+            <span class="statusBadge status-<?= strtolower($report['status']); ?>">
+                <?= htmlspecialchars($report['status']); ?>
+            </span>
+
+            <span class="severityBadge">
+                <?= htmlspecialchars($severity); ?>
+            </span>
+        </div>
+
+        <div class="report-sub">
             Reporter: <strong><?= htmlspecialchars($reporterName); ?></strong>
-        </span>
+        </div>
     </div>
 
     <h3><?= htmlspecialchars($report['reportType']); ?></h3>
@@ -167,8 +197,6 @@ $lng = $report['longitude'] ?? $report['lng'] ?? null;
 
 </div>
 
-
-<!-- Leaflet (OpenStreetMap) JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>

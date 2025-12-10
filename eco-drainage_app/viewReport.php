@@ -19,22 +19,50 @@ $reportID = (int)$_GET['id'];
 
 // If ADMIN submits "Assign To" form
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff_id'])) {
+
     $staffID = (int)$_POST['assign_staff_id'];
 
     if ($staffID > 0) {
+
+        // Get staff name for activity logs
+        $staffSql = "SELECT firstName, lastName FROM users WHERE userID = ?";
+        $stmtStaff = $conn->prepare($staffSql);
+        $stmtStaff->bind_param("i", $staffID);
+        $stmtStaff->execute();
+        $staffResult = $stmtStaff->get_result();
+        $staffName = "Unknown Staff";
+
+        if ($staffResult->num_rows > 0) {
+            $staffRow = $staffResult->fetch_assoc();
+            $staffName = $staffRow['firstName'] . " " . $staffRow['lastName'];
+        }
+        $stmtStaff->close();
+
+        // Update assignment
         $updateSql = "UPDATE REPORTS SET assignedTo = ? WHERE id = ?";
         $stmtUp = $conn->prepare($updateSql);
+
         if ($stmtUp) {
             $stmtUp->bind_param("ii", $staffID, $reportID);
             $stmtUp->execute();
             $stmtUp->close();
         }
+
+        // 🔥 Log the action
+        logActivity(
+            $conn,
+            $_SESSION['user_id'],   // admin who assigned
+            $reportID,              // which report
+            "Assignment Updated",   // action title
+            "Assigned to: " . $staffName // details
+        );
     }
 
     // avoid form resubmission
     header("Location: viewReport.php?id=" . $reportID);
     exit;
 }
+
 
 /* ------------------  FETCH REPORT + REPORTER + ASSIGNED STAFF  ------------------ */
 
@@ -389,7 +417,7 @@ if ($isAdmin) {
         <!-- Already assigned: show name to BOTH admin & resident -->
         <div class="assigned-card">
             <div><strong><?= htmlspecialchars($assignedStaffName); ?></strong>
-                <span class="assigned-badge">Barangay Official</span>
+                <span class="assigned-badge">Maintenance Staff</span>
             </div>
             <?php if ($assignedStaffEmail): ?>
                 <div class="muted"><?= htmlspecialchars($assignedStaffEmail); ?></div>

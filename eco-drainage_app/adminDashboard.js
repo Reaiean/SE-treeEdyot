@@ -88,9 +88,9 @@ function initMap() {
       marker = L.marker(e.latlng).addTo(map);
     }
 
-    streetViewDiv.innerHTML = `
-      <strong>Selected Location:</strong><br>
-      Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}
-    `;
+streetViewDiv.innerHTML = `
+    <strong>Selected Location:</strong><br>
+    <span>Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}</span>
+`;
   });
 }

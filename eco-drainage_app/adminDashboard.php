@@ -56,6 +56,23 @@ if ($result = $conn->query($reportQuery)) {
         $reportRows[] = $row;
     }
 }
+
+$activityRows = [];
+$activityQuery = "
+    SELECT al.*, 
+           u.firstName, u.lastName,
+           r.reportType
+    FROM activity_logs al
+    JOIN users u ON al.userID = u.userID
+    JOIN reports r ON al.reportID = r.id
+    ORDER BY al.timestamp DESC
+";
+
+if ($result = $conn->query($activityQuery)) {
+    while ($row = $result->fetch_assoc()) {
+        $activityRows[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -210,8 +227,32 @@ if ($result = $conn->query($reportQuery)) {
                         </tbody>
                     </table>
                 </div>
+<div id="activity-logs" class="logs-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Report</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
 
-                <div id="activity-logs" class="logs-table"></div>
+        <tbody>
+            <?php foreach ($activityRows as $a): ?>
+                <tr>
+                    <td><?= date("F d, Y h:i A", strtotime($a['timestamp'])) ?></td>
+                    <td><?= htmlspecialchars($a['firstName'] . " " . $a['lastName']) ?></td>
+                    <td>RPT<?= str_pad($a['reportID'], 3, '0', STR_PAD_LEFT) ?></td>
+                    <td><?= htmlspecialchars($a['actionType']) ?></td>
+                    <td><?= htmlspecialchars($a['actionDescription']) ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
 
             </div>
         </div>

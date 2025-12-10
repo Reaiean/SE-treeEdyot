@@ -98,25 +98,31 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
             color: #555;
         }
 
+        /* Status badges (unchanged) */
         .statusBadge {
             padding: 5px 10px;
-            border-radius: 6px;
+            border-radius: 999px;
             margin-left: 10px;
             font-size: 14px;
-            color: #fff;
         }
-        .status-pending { background: #f39c12; }
-        .status-ongoing { background: #007bff; }
-        .status-completed { background: #2ecc71; }
 
-        .severityBadge {
-            background: #ffb8b8;
-            color: #a10000;
+        .status-pending { background:#fcf96c; color:#7a6506; }
+        .status-ongoing { background:#5aa6ff; color:white; }
+        .status-completed { background:#43c96a; color:white; }
+
+        /* --- ✔ Updated Severity Badge Styling to match Dashboard --- */
+        .badge {
             padding: 5px 10px;
-            border-radius: 6px;
+            border-radius: 999px;
             font-size: 14px;
             font-weight: 600;
+            display: inline-block;
+            text-transform: capitalize;
         }
+
+        .badge-minor { background:#84fcac; color:#026d32; }
+        .badge-moderate { background:#ffa45a; color:rgb(117, 59, 5); }
+        .badge-severe { background:#ffb8b8; color:#a10000; }
 
         .report-image img {
             width: 100%;
@@ -124,11 +130,6 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
             object-fit: cover;
             border-radius: 8px;
             margin: 10px 0;
-        }
-
-        .section-title {
-            font-weight: bold;
-            margin-top: 18px;
         }
 
         #map {
@@ -160,7 +161,8 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
                 <?= htmlspecialchars($report['status']); ?>
             </span>
 
-            <span class="severityBadge">
+            <!-- ✔ Updated Severity Badge Class -->
+            <span class="badge badge-<?= strtolower($severity); ?>">
                 <?= htmlspecialchars($severity); ?>
             </span>
         </div>

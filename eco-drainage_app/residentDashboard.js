@@ -73,11 +73,12 @@ const imgURL = report.image ? `/eco-drainage_app/${report.image}` : "/eco-draina
 }
 
 
-
-// Button action placeholder
+// Button action - make it global so inline onclick can find it
 function viewReport(id) {
     window.location.href = `viewReport.php?id=${id}`;
 }
+window.viewReport = viewReport;
+
 
 
     function escapeHtml(str) {

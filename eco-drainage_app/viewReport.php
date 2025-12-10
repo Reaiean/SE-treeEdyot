@@ -2,22 +2,57 @@
 session_start();
 require_once "db_config.php";
 
+// Must be logged in
 if (!isset($_SESSION['user_email'])) {
     header("Location: login.html");
     exit;
 }
 
+$isAdmin   = (isset($_SESSION['role_id']) && $_SESSION['role_id'] == 1);
+$userEmail = $_SESSION['user_email'] ?? '';
+
+// Validate report ID
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die("Invalid report ID");
 }
+$reportID = (int)$_GET['id'];
 
-$reportID = intval($_GET['id']);
+// If ADMIN submits "Assign To" form
+if ($isAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_staff_id'])) {
+    $staffID = (int)$_POST['assign_staff_id'];
+
+    if ($staffID > 0) {
+        $updateSql = "UPDATE REPORTS SET assignedTo = ? WHERE id = ?";
+        $stmtUp = $conn->prepare($updateSql);
+        if ($stmtUp) {
+            $stmtUp->bind_param("ii", $staffID, $reportID);
+            $stmtUp->execute();
+            $stmtUp->close();
+        }
+    }
+
+    // avoid form resubmission
+    header("Location: viewReport.php?id=" . $reportID);
+    exit;
+}
+
+/* ------------------  FETCH REPORT + REPORTER + ASSIGNED STAFF  ------------------ */
 
 $sql = "
-SELECT r.*, 
-       u.firstName, u.lastName
-FROM reports r
-INNER JOIN users u ON r.userID = u.userID
+SELECT 
+    r.*,
+    ru.firstName  AS reporterFirstName,
+    ru.lastName   AS reporterLastName,
+    ru.email      AS reporterEmail,
+    ru.contactNumber AS reporterContact,
+    ru.address    AS reporterAddress,
+    su.userID     AS staffUserID,
+    su.firstName  AS staffFirstName,
+    su.lastName   AS staffLastName,
+    su.email      AS staffEmail
+FROM REPORTS r
+INNER JOIN users ru ON r.userID = ru.userID
+LEFT JOIN users su  ON r.assignedTo = su.userID
 WHERE r.id = ?
 LIMIT 1
 ";
@@ -32,18 +67,47 @@ if ($result->num_rows === 0) {
 }
 
 $report = $result->fetch_assoc();
-$reporterName = $report['firstName'] . " " . $report['lastName'];
+$stmt->close();
 
-$imageRel = !empty($report['photoPath']) 
-    ? $report['photoPath'] 
+// Reporter / staff data
+$reporterName   = $report['reporterFirstName'] . " " . $report['reporterLastName'];
+$reporterEmail  = $report['reporterEmail'];
+$reporterContact= $report['reporterContact'];
+$reporterAddress= $report['reporterAddress'];
+
+$assignedStaffName  = (!empty($report['staffFirstName']))
+    ? $report['staffFirstName'] . " " . $report['staffLastName']
+    : null;
+$assignedStaffEmail = $report['staffEmail'] ?? null;
+
+// Image path
+$imageRel = !empty($report['photoPath'])
+    ? $report['photoPath']
     : "uploads/defaultImage.jpg";
-
 $imagePath = "/eco-drainage_app/" . $imageRel;
 
+// Coordinates
 $lat = $report['latitude'] ?? $report['lat'] ?? null;
 $lng = $report['longitude'] ?? $report['lng'] ?? null;
 
+// Severity + status
 $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
+$status   = !empty($report['status'])   ? $report['status']   : "Pending";
+
+// If admin, we need the list of staff (roleID = 3)
+$staffOptions = [];
+if ($isAdmin) {
+    $staffSql = "SELECT userID, firstName, lastName, email 
+                 FROM users 
+                 WHERE roleID = 3
+                 ORDER BY firstName, lastName";
+    if ($resStaff = $conn->query($staffSql)) {
+        while ($row = $resStaff->fetch_assoc()) {
+            $staffOptions[] = $row;
+        }
+        $resStaff->free();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +115,7 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
     <meta charset="UTF-8">
     <title>Report Details</title>
 
+    <!-- Leaflet (OpenStreetMap) CSS -->
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
@@ -66,7 +131,7 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
             max-width: 900px;
             margin: 20px auto;
             background: #fff;
-            padding: 18px 25px;
+            padding: 18px 25px 28px;
             border-radius: 10px;
         }
 
@@ -98,31 +163,35 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
             color: #555;
         }
 
-        /* Status badges (unchanged) */
         .statusBadge {
             padding: 5px 10px;
-            border-radius: 999px;
-            margin-left: 10px;
+            border-radius: 6px;
             font-size: 14px;
+            color: #fff;
         }
+        .status-pending   { background: #f39c12; }
+        .status-ongoing   { background: #007bff; }
+        .status-completed { background: #2ecc71; }
 
-        .status-pending { background:#fcf96c; color:#7a6506; }
-        .status-ongoing { background:#5aa6ff; color:white; }
-        .status-completed { background:#43c96a; color:white; }
-
-        /* --- ✔ Updated Severity Badge Styling to match Dashboard --- */
-        .badge {
+        .severityBadge {
             padding: 5px 10px;
-            border-radius: 999px;
+            border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
-            display: inline-block;
-            text-transform: capitalize;
         }
-
-        .badge-minor { background:#84fcac; color:#026d32; }
-        .badge-moderate { background:#ffa45a; color:rgb(117, 59, 5); }
-        .badge-severe { background:#ffb8b8; color:#a10000; }
+        /* severity colors */
+        .severity-severe {
+            background: #ff4b4b;
+            color: #fff;
+        }
+        .severity-moderate {
+            background: #ffb547;
+            color: #4a3200;
+        }
+        .severity-minor {
+            background: #4caf50;
+            color: #fff;
+        }
 
         .report-image img {
             width: 100%;
@@ -130,6 +199,12 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
             object-fit: cover;
             border-radius: 8px;
             margin: 10px 0;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 18px;
+            margin-bottom: 6px;
         }
 
         #map {
@@ -142,6 +217,82 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
         hr {
             margin-top: 15px;
         }
+
+        /* Reporter + Assigned cards */
+        .info-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 8px;
+        }
+
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 18px;
+            font-size: 14px;
+        }
+
+        .info-col {
+            min-width: 180px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .assigned-card {
+            background: #f1f6ff;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-top: 8px;
+        }
+
+        .assigned-badge {
+            display: inline-block;
+            margin-left: 8px;
+            background: #111827;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+        }
+
+        .assign-form {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .assign-select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            min-width: 220px;
+        }
+
+        .assign-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: none;
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .assign-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -149,20 +300,24 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
 
 <div class="container">
 
-    <button class="backBtn" onclick="window.location.href='residentDashboard.php'">
-        ← Back to Dashboard
+    <!-- Use history.back() so it works for both admin and resident -->
+    <button class="backBtn" onclick="history.back()">
+        ← Back
     </button>
 
+    <!-- HEADER -->
     <div class="report-header">
         <div class="report-header-top">
             RPT<?= str_pad($report['id'], 3, '0', STR_PAD_LEFT); ?>
 
-            <span class="statusBadge status-<?= strtolower($report['status']); ?>">
-                <?= htmlspecialchars($report['status']); ?>
+            <span class="statusBadge status-<?= strtolower($status); ?>">
+                <?= htmlspecialchars($status); ?>
             </span>
 
-            <!-- ✔ Updated Severity Badge Class -->
-            <span class="badge badge-<?= strtolower($severity); ?>">
+            <?php
+                $sevClass = 'severity-' . strtolower($severity);
+            ?>
+            <span class="severityBadge <?= $sevClass ?>">
                 <?= htmlspecialchars($severity); ?>
             </span>
         </div>
@@ -172,33 +327,112 @@ $severity = !empty($report['severity']) ? $report['severity'] : "N/A";
         </div>
     </div>
 
+    <!-- TYPE -->
     <h3><?= htmlspecialchars($report['reportType']); ?></h3>
 
+    <!-- IMAGE -->
     <div class="report-image">
-        <img src="<?= $imagePath; ?>" alt="Report Image">
+        <img src="<?= htmlspecialchars($imagePath); ?>" alt="Report Image">
     </div>
 
+    <!-- DESCRIPTION -->
     <p><strong>Description:</strong><br>
         <?= nl2br(htmlspecialchars($report['description'])); ?>
     </p>
 
     <hr>
 
+    <!-- LOCATION -->
     <p><strong>Location:</strong><br>
         <?= htmlspecialchars($report['location']); ?>
     </p>
-    <p><strong>Coordinates: </strong><?= $lat . ", " . $lng; ?></p>
+    <p><strong>Coordinates: </strong><?= htmlspecialchars($lat . ", " . $lng); ?></p>
 
     <div id="map"></div>
 
     <hr>
 
+    <!-- TIMELINE -->
     <p><strong>Timeline:</strong><br>
         Filed: <?= date("F d, Y h:i A", strtotime($report['dateFiled'])); ?>
     </p>
 
+    <!-- REPORTER INFORMATION -->
+    <div class="section-title">Reporter Information</div>
+    <div class="info-card">
+        <div class="info-row">
+            <div class="info-col">
+                <div class="info-label">Name:</div>
+                <div><?= htmlspecialchars($reporterName); ?></div>
+            </div>
+            <div class="info-col">
+                <div class="info-label">Contact:</div>
+                <div><?= htmlspecialchars($reporterContact); ?></div>
+            </div>
+        </div>
+        <div class="info-row" style="margin-top:8px;">
+            <div class="info-col">
+                <div class="info-label">Email:</div>
+                <div><?= htmlspecialchars($reporterEmail); ?></div>
+            </div>
+            <div class="info-col">
+                <div class="info-label">Address:</div>
+                <div><?= htmlspecialchars($reporterAddress); ?></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSIGNED TO SECTION -->
+    <div class="section-title" style="margin-top:18px;">Assigned To</div>
+
+    <?php if ($assignedStaffName): ?>
+        <!-- Already assigned: show name to BOTH admin & resident -->
+        <div class="assigned-card">
+            <div><strong><?= htmlspecialchars($assignedStaffName); ?></strong>
+                <span class="assigned-badge">Barangay Official</span>
+            </div>
+            <?php if ($assignedStaffEmail): ?>
+                <div class="muted"><?= htmlspecialchars($assignedStaffEmail); ?></div>
+            <?php endif; ?>
+        </div>
+
+    <?php else: ?>
+        <!-- NOT assigned yet -->
+        <?php if ($isAdmin): ?>
+            <!-- Admin sees the dropdown + button -->
+            <div class="assigned-card">
+                <div class="muted">This report has not yet been assigned to a staff member.</div>
+
+                <?php if (count($staffOptions) > 0): ?>
+                    <form method="post" class="assign-form">
+                        <label for="assign_staff_id"><strong>Assign to:</strong></label>
+                        <select name="assign_staff_id" id="assign_staff_id" class="assign-select" required>
+                            <option value="">Select staff…</option>
+                            <?php foreach ($staffOptions as $st): ?>
+                                <option value="<?= $st['userID']; ?>">
+                                    <?= htmlspecialchars($st['firstName'] . " " . $st['lastName']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="submit" class="assign-btn">Assign</button>
+                    </form>
+                <?php else: ?>
+                    <div class="muted" style="margin-top:6px;">
+                        No staff with role "Maintenance Staff" found.
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <!-- Resident / staff see read-only text -->
+            <div class="assigned-card">
+                <div class="muted">Not yet assigned</div>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
+
 </div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>

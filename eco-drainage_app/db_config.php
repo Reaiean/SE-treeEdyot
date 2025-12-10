@@ -10,4 +10,14 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+function logActivity($conn, $userID, $reportID, $type, $desc = null) {
+    $sql = "INSERT INTO activity_logs (userID, reportID, actionType, actionDescription)
+            VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iiss", $userID, $reportID, $type, $desc);
+    $stmt->execute();
+}
+
 ?>
+

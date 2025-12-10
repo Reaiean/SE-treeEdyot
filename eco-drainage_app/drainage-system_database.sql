@@ -39,9 +39,14 @@ CREATE TABLE REPORTS (
   ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+ALTER TABLE REPORTS
+    ADD COLUMN assignedTo INT NULL AFTER userId;
 
-
-
+ALTER TABLE REPORTS
+    ADD CONSTRAINT fk_reports_assigned_to
+    FOREIGN KEY (assignedTo) REFERENCES users(userID)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL;
 
 INSERT INTO roles (roleName) VALUES 
 ('Admin'),
@@ -51,14 +56,3 @@ INSERT INTO roles (roleName) VALUES
 SELECT * FROM users;
 SELECT * FROM reports;
 SELECT * FROM roles;
-
-
-
-
-
-
-
-
-
-
-

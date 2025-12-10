@@ -5,10 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let map = null;
     let markersLayer = null;
 
-    // Initialize Map (Same style as Resident)
     function initMap() {
         map = L.map("map").setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
             attribution: "© OpenStreetMap contributors"
@@ -17,200 +15,131 @@ document.addEventListener("DOMContentLoaded", () => {
         markersLayer = L.layerGroup().addTo(map);
     }
 
-    // Helper for safe HTML
-    function escapeHtml(str) {
-        if (!str && str !== 0) return "";
-        return String(str).replace(/[&<>"']/g, c => ({
-            "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
-        }[c]));
-    }
-
-    // --- Create Staff Report Card (Implements Diagram Branch 3) ---
-    function createStaffReportCard(report) {
+    function createReportCard(report) {
         const div = document.createElement("div");
-        div.className = "reportItem staffCardHeight"; // uses resident style class + staff specific override
+        div.className = "reportItem";
 
-        const idFormat = `RPT${String(report.id).padStart(3, '0')}`;
+        const idFormat = report.id ? `RPT${String(report.id).padStart(3,'0')}` : "Report";
         const type = escapeHtml(report.reportType || "Drainage Issue");
         const status = escapeHtml(report.status || "Pending");
         const statusClass = `status-${status.toLowerCase()}`;
-        const loc = escapeHtml(report.location || "");
+        const severity = escapeHtml(report.severity || "Minor");
+        const severityClass = `severity-${severity.toLowerCase()}`;
         const desc = escapeHtml(report.description || "");
-        
-        // Image handling (using relative path logic from residentDashboard.js)
-        const imgURL = report.image ? `/eco-drainage_app/${report.image}` : "images/defaultImage.jpg";
+        const loc = escapeHtml(report.location || "");
+        const filed = escapeHtml(report.dateFiled || "");
 
-        // Current values for inputs (if they exist in DB)
-        const currentRemarks = escapeHtml(report.remarks || "");
+        const imgURL = report.image ? `/eco-drainage_app/${report.image}` : "/eco-drainage_app/uploads/defaultImage.jpg";
 
-        /* HTML Structure based on Diagram:
-           1. Info Details
-           2. INPUTS: Status Dropdown & Remarks
-           3. ACTION: Update Status Button
-        */
         div.innerHTML = `
             <div class="reportImage">
-                <img src="${imgURL}" alt="Report Photo" onerror="this.src='images/defaultImage.jpg'">
+                <img src="${imgURL}" alt="Report Photo">
             </div>
 
             <div class="reportContent">
                 <div class="reportTopRow">
                     <span class="reportID">${idFormat}</span>
                     <span class="statusBadge ${statusClass}">${status}</span>
+                    <span class="severityBadge ${severityClass}">${severity}</span>
                 </div>
 
                 <div class="reportType">${type}</div>
-                <p class="reportDesc">${desc}</p>
-                <div class="reportMeta">📍 ${loc}</div>
 
-                <div class="staffActionArea">
-                    <div class="inputGroup">
-                        <label>Status:</label>
-                        <select id="status-${report.id}" class="staffSelect">
-                            <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
-                            <option value="Ongoing" ${status === 'Ongoing' ? 'selected' : ''}>Ongoing</option>
-                            <option value="Completed" ${status === 'Completed' ? 'selected' : ''}>Completed</option>
-                        </select>
-                    </div>
-                    <div class="inputGroup">
-                        <label>Remarks:</label>
-                        <input type="text" id="remarks-${report.id}" class="staffInput" 
-                               placeholder="Enter remarks..." value="${currentRemarks}">
-                    </div>
+                <p class="reportDesc">${desc}</p>
+
+                <div class="reportMeta">
+                    <span class="metaItem">📍 ${loc}</span>
+                    <span class="metaItem">📅 Filed: ${filed}</span>
                 </div>
             </div>
 
-            <div class="staffBtnGroup">
-                 <button class="viewBtn" onclick="window.location.href='viewReport.php?id=${report.id}'">
-                    👁 Details
-                </button>
-                
-                <button class="updateBtn" onclick="updateReport(${report.id})">
-                    💾 Update Status
-                </button>
+            <div class="reportActions">
+                <button class="updateBtn" onclick="takeAction(${report.id})">Take Action</button>
+                <button class="viewBtn" onclick="viewReport(${report.id})">View Details</button>
             </div>
         `;
-
         return div;
     }
 
-    // --- Diagram Logic: Update Status ---
-    window.updateReport = async function(id) {
-        const newStatus = document.getElementById(`status-${id}`).value;
-        const newRemarks = document.getElementById(`remarks-${id}`).value;
+    function takeAction(reportId) {
+        const modal = document.getElementById('updateModal');
+        if (!modal) return;
+        modal.classList.add('open');
+        document.getElementById('modalReportId').textContent = `RPT${String(reportId).padStart(3,'0')}`;
+        document.getElementById('modalNewStatus').innerHTML = `
+            <option value="">Select</option>
+            <option value="Pending">Pending</option>
+            <option value="Ongoing">Ongoing</option>
+            <option value="Completed">Completed</option>
+        `;
+        document.getElementById('modalRemarks').value = '';
+    }
 
-        if(!confirm(`Update Report #${id} to '${newStatus}'?`)) return;
+    function viewReport(id) {
+        window.location.href = `viewReport.php?id=${id}`;
+    }
+    window.viewReport = viewReport;
+    window.takeAction = takeAction;
 
-        try {
-            // NOTE: You must create 'staffUpdateReport.php' to handle the SQL UPDATE
-            const formData = new FormData();
-            formData.append('report_id', id);
-            formData.append('status', newStatus);
-            formData.append('remarks', newRemarks);
+    function escapeHtml(str) {
+        if (!str && str !== 0) return "";
+        return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    }
 
-            const resp = await fetch("staffUpdateReport.php", {
-                method: "POST",
-                body: formData
-            });
-
-            const data = await resp.json();
-            if (data.success) {
-                alert("Report updated successfully.");
-                loadStaffReports(); // Reload to refresh list/map
-            } else {
-                alert("Update failed: " + (data.message || "Unknown error"));
-            }
-        } catch(err) {
-            console.error(err);
-            alert("Error connecting to server.");
-        }
-    };
-
-    // Add marker (Diagram Branch 1)
     function addMarker(report) {
         const lat = parseFloat(report.latitude ?? report.lat);
         const lng = parseFloat(report.longitude ?? report.lng);
-
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
 
         const marker = L.marker([lat, lng]).addTo(markersLayer);
-        
-        // Popup shows basic info
-        const content = `<strong>${escapeHtml(report.reportType)}</strong><br>
-                         Status: ${escapeHtml(report.status)}`;
-        marker.bindPopup(content);
+        const title = escapeHtml(report.reportType || "Report");
+        const loc = escapeHtml(report.location || "");
+        marker.bindPopup(`<strong>${title}</strong><br>${loc}`);
         return marker;
     }
 
-    // Load Data
-    async function loadStaffReports() {
+    async function loadReports() {
         const reportsList = document.getElementById("reportsList");
-        
+        if (!reportsList) return;
+
         try {
-            // NOTE: You must create 'getStaffReports.php' which selects WHERE assigned_staff_id = ?
-            const resp = await fetch("getStaffReports.php", { cache: "no-store" });
-            
-            if (!resp.ok) {
-                 // Fallback for demo purposes if file doesn't exist yet
-                console.warn("getStaffReports.php not found. Ensure backend is created.");
-                reportsList.innerHTML = "<p>Error: Create 'getStaffReports.php' to fetch data.</p>";
-                return;
-            }
-
+            const resp = await fetch("getAssignedReports.php", { cache: "no-store" });
             const data = await resp.json();
-            
-            // 1. Update Stats
-            if (data.stats) {
-                document.getElementById("totalAssigned").textContent = data.stats.total || 0;
-                document.getElementById("pendingReports").textContent = data.stats.pending || 0;
-                document.getElementById("ongoingReports").textContent = data.stats.ongoing || 0;
-                document.getElementById("completedReports").textContent = data.stats.completed || 0;
-            }
 
-            // 2. Render List
+            // Update stats
+            const set = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value ?? 0; };
+            set("totalAssigned", data.stats?.total ?? 0);
+            set("pendingReports", data.stats?.pending ?? 0);
+            set("ongoingReports", data.stats?.ongoing ?? 0);
+            set("completedReports", data.stats?.completed ?? 0);
+
+            // Render reports
             reportsList.innerHTML = "";
+            const reports = Array.isArray(data.reports) ? data.reports : [];
+            if (reports.length === 0) reportsList.innerHTML = "<p>No assigned reports.</p>";
+            else reports.forEach(r => reportsList.appendChild(createReportCard(r)));
+
+            // Add markers
             markersLayer.clearLayers();
-            
-            const reports = data.reports || [];
-            const addedMarkers = [];
-
-            if (reports.length === 0) {
-                reportsList.innerHTML = "<p>No tasks assigned to you currently.</p>";
-            } else {
-                reports.forEach(r => {
-                    // Create List Item
-                    reportsList.appendChild(createStaffReportCard(r));
-                    
-                    // Create Map Pin
-                    const m = addMarker(r);
-                    if(m) addedMarkers.push(m);
-                });
-            }
-
-            // 3. Center Map
-            if (addedMarkers.length > 0) {
-                const group = L.featureGroup(addedMarkers);
-                map.fitBounds(group.getBounds(), { padding: [40, 40] });
-            } else {
-                map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-            }
+            const addedMarkers = reports.map(r => addMarker(r)).filter(m => m);
+            if (addedMarkers.length) map.fitBounds(L.featureGroup(addedMarkers).getBounds(), { padding: [40,40] });
+            else map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
         } catch (err) {
             console.error(err);
-            reportsList.innerHTML = "<p>Error loading tasks.</p>";
+            reportsList.innerHTML = "<p>Error loading assigned reports.</p>";
+            map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
         }
     }
 
-    // Logout
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
-            fetch("logout.php", { method: "POST" })
+            fetch("logout.php", { method: "POST", credentials: "same-origin" })
                 .finally(() => { window.location.href = "login.html"; });
         });
     }
 
-    // Init
     initMap();
-    loadStaffReports();
+    loadReports();
 });

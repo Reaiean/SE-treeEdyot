@@ -39,6 +39,18 @@ CREATE TABLE REPORTS (
   ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT NOT NULL,
+    reportID INT NOT NULL,
+    actionType VARCHAR(255) NOT NULL,
+    actionDescription TEXT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (userID) REFERENCES users(userID),
+    FOREIGN KEY (reportID) REFERENCES reports(id)
+);
+
 ALTER TABLE REPORTS
     ADD COLUMN assignedTo INT NULL AFTER userId;
 
@@ -56,3 +68,4 @@ INSERT INTO roles (roleName) VALUES
 SELECT * FROM users;
 SELECT * FROM reports;
 SELECT * FROM roles;
+SELECT * FROM activity_logs;
